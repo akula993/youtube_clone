@@ -1,3 +1,5 @@
+/* Основные стили для YouTube Clone */
+
 /* Общие стили */
 body {
     background-color: #f9f9f9;
@@ -15,27 +17,27 @@ a:hover {
 
 /* Стили для карточек видео */
 .video-card {
-    transition: transform 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .video-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .video-thumbnail {
     position: relative;
-    display: block;
     overflow: hidden;
+    border-radius: 8px 8px 0 0;
 }
 
 .video-thumbnail img {
+    transition: transform 0.3s ease;
     width: 100%;
-    height: 140px;
+    height: 180px;
     object-fit: cover;
-    transition: transform 0.3s;
 }
 
 .video-thumbnail:hover img {
@@ -46,11 +48,12 @@ a:hover {
     position: absolute;
     bottom: 8px;
     right: 8px;
-    background-color: rgba(0, 0, 0, 0.7);
+    background: rgba(0,0,0,0.8);
     color: white;
-    padding: 2px 4px;
-    border-radius: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: 12px;
+    font-weight: 500;
 }
 
 .video-card .card-title {
@@ -65,262 +68,12 @@ a:hover {
 
 .video-card .card-title a {
     color: #212529;
-    text-decoration: none;
 }
 
 .video-card .card-title a:hover {
     color: #167ac6;
 }
 
-.uploader-name {
-    font-size: 14px;
-    color: #6c757d !important;
-}
-
-.uploader-name:hover {
-    color: #212529 !important;
-}
-
-/* Категории */
-.category-scroll {
-    display: flex;
-    overflow-x: auto;
-    padding: 8px 0;
-    margin-bottom: 16px;
-}
-
-.category-badge {
-    display: inline-block;
-    padding: 8px 12px;
-    margin-right: 8px;
-    background-color: #f1f3f4;
-    color: #030303;
-    border-radius: 32px;
-    text-decoration: none;
-    white-space: nowrap;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.category-badge:hover {
-    background-color: #e0e0e0;
-    color: #030303;
-    text-decoration: none;
-}
-
-.category-badge.active {
-    background-color: #030303;
-    color: white;
-}
-
-/* Страница видео */
-.video-info {
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 16px;
-}
-
-.video-actions .btn {
-    margin-right: 8px;
-}
-
-.video-meta {
-    color: #606060;
-    font-size: 14px;
-}
-
-.video-description {
-    margin-top: 16px;
-}
-
-.video-categories .badge {
-    margin-right: 4px;
-}
-
-/* Комментарии */
-.comments-section {
-    margin-top: 24px;
-}
-
-.comment {
-    padding: 16px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.comment:last-child {
-    border-bottom: none;
-}
-
-.comment-actions .btn {
-    padding: 4px 8px;
-    font-size: 12px;
-    color: #606060;
-}
-
-.comment-actions .btn:hover {
-    color: #167ac6;
-}
-
-.comment-actions .btn.text-primary {
-    color: #167ac6 !important;
-}
-
-.comment-actions .btn.text-danger {
-    color: #dc3545 !important;
-}
-
-.reply {
-    margin-left: 40px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.reply:last-child {
-    border-bottom: none;
-}
-
-/* Форма комментария */
-.comment-actions {
-    display: none;
-}
-
-.comment-actions.show {
-    display: block;
-}
-
-textarea:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(22, 122, 198, 0.25);
-}
-
-/* Профиль пользователя */
-.profile-picture {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
-}
-
-/* Канал пользователя */
-.channel-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px 0;
-    margin-bottom: 24px;
-}
-
-.channel-info {
-    text-align: center;
-}
-
-.channel-stats {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    margin-top: 16px;
-}
-
-.channel-stat {
-    text-align: center;
-}
-
-.channel-stat-number {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.channel-stat-label {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .video-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .video-actions .btn {
-        margin-bottom: 8px;
-        margin-right: 0;
-    }
-
-    .category-scroll {
-        padding: 8px 16px;
-        margin: 0 -16px 16px -16px;
-    }
-
-    .channel-stats {
-        flex-direction: column;
-        gap: 8px;
-    }
-}
-
-/* Анимации */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* Загрузка */
-.loading {
-    text-align: center;
-    padding: 40px 0;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #167ac6;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Кнопки действий */
-.btn-group-sm > .btn, .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    border-radius: 0.2rem;
-}
-
-/* Pagination */
-.pagination {
-    margin-top: 2rem;
-}
-
-.page-link {
-    color: #167ac6;
-    border-color: #dee2e6;
-}
-
-.page-link:hover {
-    color: #0056b3;
-    background-color: #e9ecef;
-    border-color: #dee2e6;
-}
-
-.page-item.active .page-link {
-    background-color: #167ac6;
-    border-color: #167ac6;
-}
 /* Уведомления */
 .notifications-dropdown {
     max-height: 400px;
@@ -362,57 +115,12 @@ textarea:focus {
     background-color: #f8f9fa;
 }
 
-.playlist-video-item.dragging {
-    opacity: 0.5;
-}
-
 .drag-handle {
     cursor: grab;
 }
 
 .drag-handle:active {
     cursor: grabbing;
-}
-
-/* Видеокарточки */
-.video-card {
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.video-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.video-thumbnail {
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-}
-
-.video-thumbnail img {
-    transition: transform 0.3s ease;
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.video-thumbnail:hover img {
-    transform: scale(1.05);
-}
-
-.video-duration {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
 }
 
 /* Поиск */
@@ -444,71 +152,17 @@ textarea:focus {
     background: rgba(255,255,255,0.1);
 }
 
-/* Боковая панель */
-.offcanvas .list-group-item {
-    border: none;
-    padding: 12px 20px;
-    color: #333;
-    transition: background-color 0.2s ease;
-}
-
-.offcanvas .list-group-item:hover {
-    background-color: #f8f9fa;
-}
-
-.offcanvas .list-group-item.active {
-    background-color: #0d6efd;
-    color: white;
-}
-
-.offcanvas .list-group-item i {
-    width: 20px;
-    text-align: center;
-}
-
-/* Категории */
-.category-pills {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 12px 0;
-    margin-bottom: 20px;
-}
-
-.category-pill {
-    display: inline-block;
-    padding: 8px 16px;
-    background: #f1f3f4;
-    color: #030303;
-    border-radius: 32px;
-    text-decoration: none;
-    white-space: nowrap;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.category-pill:hover {
-    background: #e0e0e0;
-    color: #030303;
-}
-
-.category-pill.active {
-    background: #030303;
-    color: white;
-}
-
 /* Комментарии */
-.comment-section {
+.comments-section {
     margin-top: 24px;
 }
 
-.comment-item {
+.comment {
     padding: 16px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
-.comment-item:last-child {
+.comment:last-child {
     border-bottom: none;
 }
 
@@ -525,100 +179,13 @@ textarea:focus {
     background: rgba(13, 110, 253, 0.1);
 }
 
-.comment-reply {
+.reply {
     margin-left: 48px;
     border-left: 2px solid #f0f0f0;
     padding-left: 16px;
 }
 
-/* Анимации загрузки */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(0,0,0,.1);
-    border-radius: 50%;
-    border-top-color: #0d6efd;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .video-card .card-img-top {
-        height: 180px;
-    }
-
-    .playlist-video-item .video-thumbnail img {
-        width: 100px;
-        height: 56px;
-    }
-
-    .notification-item .d-flex {
-        flex-direction: column;
-    }
-
-    .notification-item .me-3 {
-        margin-right: 0 !important;
-        margin-bottom: 12px;
-        align-self: flex-start;
-    }
-
-    .category-pills {
-        padding: 12px 16px;
-        margin: 0 -16px 20px -16px;
-    }
-}
-
-@media (max-width: 576px) {
-    .video-card .card-img-top {
-        height: 160px;
-    }
-
-    .search-form {
-        width: 100%;
-    }
-
-    .navbar .d-flex:first-child {
-        flex: 1;
-    }
-}
-
-/* Темная тема (опционально) */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #121212;
-        color: #ffffff;
-    }
-
-    .card {
-        background-color: #1e1e1e;
-        border-color: #2d2d2d;
-    }
-
-    .bg-light {
-        background-color: #2d2d2d !important;
-    }
-
-    .text-muted {
-        color: #b3b3b3 !important;
-    }
-
-    .category-pill {
-        background: #2d2d2d;
-        color: #ffffff;
-    }
-
-    .category-pill:hover {
-        background: #404040;
-        color: #ffffff;
-    }
-}
-
-/* Анимации появления */
+/* Анимации */
 .fade-in {
     animation: fadeIn 0.3s ease-out;
 }
@@ -634,36 +201,54 @@ textarea:focus {
     }
 }
 
-.slide-in {
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
+/* Адаптивность */
+@media (max-width: 768px) {
+    .video-card .card-img-top {
+        height: 160px;
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+
+    .search-form {
+        width: 100%;
+    }
+
+    .video-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .video-actions .btn {
+        margin-bottom: 8px;
+        margin-right: 0;
     }
 }
 
-/* Кастомные скроллбары */
-::-webkit-scrollbar {
-    width: 8px;
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .video-card .card-img-top {
+        height: 140px;
+    }
 }
 
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+/* Дополнительные стили */
+.trending-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #dc3545;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+.trending-video {
+    transition: transform 0.2s;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+.trending-video:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.channel-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }

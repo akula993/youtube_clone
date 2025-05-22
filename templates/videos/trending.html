@@ -1,10 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}В тренде - VidShare{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-fire fa-2x text-danger me-3"></i>
+            <div>
+                <h2>В тренде</h2>
+                <p class="text-muted mb-0">Самые популярные видео за последнюю неделю</p>
+            </div>
+        </div>
+        
+        {% if videos %}
+            <div class="row">
+                {% for video in videos %}
+                    <div class="col-12 mb-4">
+                        <div class="card trending-video">
+                            <div class="row g-0">
+                                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                    <div class="trending-number">
+                                        {{ forloop.counter }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'video-detail' video.pk %}">
+                                        <img src="{{ video.thumbnail.url }}" class="img-fluid rounded-start h-100" alt="{{ video.title }}" style="object-fit: cover;">
+                                    </a>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'video-detail' video.pk %}" class="text-decoration-none">{{ video.title }}</a>
+                                        </h5>
+                                        <p class="card-text">{{ video.description|truncatechars:150 }}</p>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center">
+                                                <a href="{% url 'user-videos' video.uploader.username %}">
+                                                    <img src="{{ video.uploader.profile_picture.url }}" class="rounded-circle me-2" width="30" height="30">
+                                                </a>
+                                                <div>
+                                                    <a href="{% url 'user-videos' video.uploader.username %}" class="text-muted text-decoration-none">
+                                                        {{ video.uploader.username }}
+                                                    </a>
+                                                    <div class="small text-muted">
+                                                        {{ video.views }} просмотров • {{ video.created_date|timesince }} назад
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="trending-stats">
+                                                <span class="badge bg-success me-1">
+                                                    <i class="fas fa-thumbs-up"></i> {{ video.get_like_count }}
+                                                </span>
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-eye"></i> {{ video.views }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Пагинация -->
+            {% if is_paginated %}
+                <nav aria-label="Пагинация трендов">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-fire fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">Пока нет трендовых видео</h3>
+                <p class="text-muted">Загружайте видео и становитесь популярными!</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'video-create' %}" class="btn btn-primary">Загрузить видео</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.trending-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.trending-video {
+    transition: transform 0.2s;
+}
+
+.trending-video:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.trending-stats .badge {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}

@@ -1,10 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}{{ channel.username }} - Канал{% endblock %}
+
+{% block content %}
+<!-- Шапка канала -->
+<div class="channel-header bg-primary text-white py-5 mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <img src="{{ channel.profile_picture.url }}" alt="{{ channel.username }}" class="rounded-circle" width="120" height="120">
+            </div>
+            <div class="col-md-6">
+                <h1>{{ channel.username }}</h1>
+                {% if channel.bio %}
+                    <p class="mb-2">{{ channel.bio }}</p>
+                {% endif %}
+                <div class="channel-stats">
+                    <span class="me-3"><i class="fas fa-video"></i> {{ videos.count }} видео</span>
+                    <span class="me-3"><i class="fas fa-users"></i> {{ channel.subscribers.count }} подписчиков</span>
+                    <span><i class="fas fa-calendar"></i> Создан {{ channel.date_joined|date:"M Y" }}</span>
+                </div>
+            </div>
+            <div class="col-md-3 text-center">
+                {% if user.is_authenticated and user != channel %}
+                    <button id="subscribeBtn" class="btn btn-lg {% if is_subscribed %}btn-secondary{% else %}btn-danger{% endif %}" data-id="{{ channel.pk }}">
+                        {% if is_subscribed %}Отписаться{% else %}Подписаться{% endif %}
+                    </button>
+                {% elif user == channel %}
+                    <a href="{% url 'profile' %}" class="btn btn-lg btn-outline-light">Редактировать канал</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Видео канала -->
+<div class="container">
+    {% if videos %}
+        <div class="row">
+            {% for video in videos %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card video-card h-100">
+                        <a href="{% url 'video-detail' video.pk %}" class="video-thumbnail">
+                            <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                            <div class="duration">5:30</div>
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="{% url 'video-detail' video.pk %}">{{ video.title }}</a></h5>
+                            <div class="text-muted small">
+                                {{ video.views }} просмотров • {{ video.created_date|timesince }} назад
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Пагинация -->
+        {% if is_paginated %}
+            <nav aria-label="Пагинация видео">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-video fa-4x text-muted mb-3"></i>
+            <h3 class="text-muted">На этом канале пока нет видео</h3>
+            {% if user == channel %}
+                <p class="text-muted">Загрузите свое первое видео!</p>
+                <a href="{% url 'video-create' %}" class="btn btn-primary">Загрузить видео</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Обработка подписки
+    $('#subscribeBtn').click(function() {
+        const channelId = $(this).data('id');
+        $.ajax({
+            url: `/video/${channelId}/subscribe/`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.subscribed) {
+                    $('#subscribeBtn').removeClass('btn-danger').addClass('btn-secondary').text('Отписаться');
+                } else {
+                    $('#subscribeBtn').removeClass('btn-secondary').addClass('btn-danger').text('Подписаться');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

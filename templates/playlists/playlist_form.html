@@ -1,10 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
-</body>
-</html>
+{% block title %}
+    {% if form.instance.pk %}Редактировать плейлист{% else %}Создать плейлист{% endif %} - VidShare
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    {% if form.instance.pk %}
+                        <i class="fas fa-edit"></i> Редактировать плейлист
+                    {% else %}
+                        <i class="fas fa-plus"></i> Создать плейлист
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <fieldset class="form-group">
+                        {{ form|crispy }}
+                    </fieldset>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">
+                            {% if form.instance.pk %}Обновить{% else %}Создать{% endif %}
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'playlist-detail' form.instance.pk %}{% else %}{% url 'playlist-list' %}{% endif %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

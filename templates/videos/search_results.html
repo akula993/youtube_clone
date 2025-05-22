@@ -1,10 +1,267 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}
+    {% if query %}Поиск: {{ query }}{% else %}Результаты поиска{% endif %} - VidShare
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="mb-4">
+            {% if query %}
+                <h2>Результаты поиска: "{{ query }}"</h2>
+                <p class="text-muted">Найдено {{ videos.count }} видео</p>
+            {% else %}
+                <h2>Результаты поиска</h2>
+                <p class="text-muted">Введите запрос для поиска видео</p>
+            {% endif %}
+        </div>
+        
+        {% if videos %}
+            <div class="row">
+                {% for video in videos %}
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    <a href="{% url 'video-detail' video.pk %}">
+                                        <img src="{{ video.thumbnail.url }}" class="img-fluid rounded-start h-100" alt="{{ video.title }}" style="object-fit: cover;">
+                                    </a>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'video-detail' video.pk %}" class="text-decoration-none">{{ video.title }}</a>
+                                        </h5>
+                                        <p class="card-text">{{ video.description|truncatechars:200 }}</p>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <a href="{% url 'user-videos' video.uploader.username %}">
+                                                <img src="{{ video.uploader.profile_picture.url }}" class="rounded-circle me-2" width="30" height="30">
+                                            </a>
+                                            <div>
+                                                <a href="{% url 'user-videos' video.uploader.username %}" class="text-muted text-decoration-none">
+                                                    {{ video.uploader.username }}
+                                                </a>
+                                                <div class="small text-muted">
+                                                    {{ video.views }} просмотров • {{ video.created_date|timesince }} назад
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="video-categories">
+                                            {% for category in video.categories.all %}
+                                                <a href="{% url 'category-videos' category.pk %}" class="badge bg-secondary text-decoration-none me-1">{{ category.name }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Пагинация -->
+            {% if is_paginated %}
+                <nav aria-label="Пагинация поиска">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Следующая</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                {% if query %}
+                    <h3 class="text-muted">По запросу "{{ query }}" ничего не найдено</h3>
+                    <p class="text-muted">Попробуйте изменить поисковый запрос</p>
+                    <div class="mt-4">
+                        <h5>Предложения:</h5>
+                        <ul class="list-unstyled">
+                            <li>• Проверьте правописание</li>
+                            <li>• Попробуйте более общие слова</li>
+                            <li>• Попробуйте другие ключевые слова</li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <h3 class="text-muted">Введите запрос для поиска</h3>
+                    <p class="text-muted">Найдите интересные видео на нашей платформе</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Дополнительные фильтры поиска -->
+        {% if query %}
+            <div class="mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-filter me-2"></i>Фильтры поиска</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" class="row g-3">
+                            <input type="hidden" name="q" value="{{ query }}">
+                            
+                            <div class="col-md-3">
+                                <label for="sort" class="form-label">Сортировка</label>
+                                <select name="sort" id="sort" class="form-select">
+                                    <option value="relevance" {% if request.GET.sort == 'relevance' %}selected{% endif %}>По релевантности</option>
+                                    <option value="date" {% if request.GET.sort == 'date' %}selected{% endif %}>По дате</option>
+                                    <option value="views" {% if request.GET.sort == 'views' %}selected{% endif %}>По просмотрам</option>
+                                    <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>По рейтингу</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="upload_date" class="form-label">Дата загрузки</label>
+                                <select name="upload_date" id="upload_date" class="form-select">
+                                    <option value="" {% if not request.GET.upload_date %}selected{% endif %}>Любая</option>
+                                    <option value="hour" {% if request.GET.upload_date == 'hour' %}selected{% endif %}>Последний час</option>
+                                    <option value="today" {% if request.GET.upload_date == 'today' %}selected{% endif %}>Сегодня</option>
+                                    <option value="week" {% if request.GET.upload_date == 'week' %}selected{% endif %}>Эта неделя</option>
+                                    <option value="month" {% if request.GET.upload_date == 'month' %}selected{% endif %}>Этот месяц</option>
+                                    <option value="year" {% if request.GET.upload_date == 'year' %}selected{% endif %}>Этот год</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="duration" class="form-label">Длительность</label>
+                                <select name="duration" id="duration" class="form-select">
+                                    <option value="" {% if not request.GET.duration %}selected{% endif %}>Любая</option>
+                                    <option value="short" {% if request.GET.duration == 'short' %}selected{% endif %}>Короткие (&lt; 4 мин)</option>
+                                    <option value="medium" {% if request.GET.duration == 'medium' %}selected{% endif %}>Средние (4-20 мин)</option>
+                                    <option value="long" {% if request.GET.duration == 'long' %}selected{% endif %}>Длинные (&gt; 20 мин)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="category" class="form-label">Категория</label>
+                                <select name="category" id="category" class="form-select">
+                                    <option value="" {% if not request.GET.category %}selected{% endif %}>Все категории</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Применить фильтры
+                                </button>
+                                <a href="{% url 'search-results' %}?q={{ query }}" class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-times me-2"></i>Сбросить
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Подсветка поискового запроса в результатах
+    const query = "{{ query|escapejs }}";
+    if (query) {
+        $('.card-title, .card-text').each(function() {
+            const text = $(this).html();
+            const highlightedText = text.replace(
+                new RegExp(query, 'gi'), 
+                '<mark>$&</mark>'
+            );
+            $(this).html(highlightedText);
+        });
+    }
+    
+    // Автоматическая отправка формы при изменении фильтров
+    $('#sort, #upload_date, #duration, #category').change(function() {
+        $(this).closest('form').submit();
+    });
+    
+    // Сохранение состояния фильтров в localStorage
+    const filters = {
+        sort: $('#sort').val(),
+        upload_date: $('#upload_date').val(),
+        duration: $('#duration').val(),
+        category: $('#category').val()
+    };
+    
+    localStorage.setItem('searchFilters', JSON.stringify(filters));
+    
+    // Восстановление фильтров при загрузке страницы
+    const savedFilters = localStorage.getItem('searchFilters');
+    if (savedFilters && !Object.values(filters).some(val => val)) {
+        const parsed = JSON.parse(savedFilters);
+        Object.keys(parsed).forEach(key => {
+            if (parsed[key]) {
+                $(`#${key}`).val(parsed[key]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+.search-result-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+mark {
+    background-color: #fff3cd;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.video-categories .badge {
+    font-size: 0.75rem;
+}
+
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .card .row {
+        flex-direction: column;
+    }
+    
+    .card .col-md-4,
+    .card .col-md-8 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+    
+    .card img {
+        height: 200px;
+        border-radius: 8px 8px 0 0 !important;
+    }
+}
+</style>
+{% endblock %}

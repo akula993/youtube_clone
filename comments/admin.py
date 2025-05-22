@@ -8,4 +8,3 @@ class CommentAdmin(admin.ModelAdmin):
     list_filter = ['created_date', 'video']
     search_fields = ['content', 'author__username', 'video__title']
     raw_id_fields = ['parent']
-

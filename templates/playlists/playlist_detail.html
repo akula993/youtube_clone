@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}{{ playlist.title }} - VidShare{% endblock %}
 
@@ -76,7 +75,7 @@
     <!-- Список видео -->
     <div class="col-lg-8">
         {% if playlist_videos %}
-            <div class="playlist-videos" id="playlistVideos">
+            <div class="playlist-videos" id="playlistVideos" data-playlist-id="{{ playlist.pk }}">
                 {% for playlist_video in playlist_videos %}
                     <div class="playlist-video-item d-flex mb-3 p-3 rounded border" data-video-id="{{ playlist_video.video.id }}" data-order="{{ playlist_video.order }}">
                         <div class="video-index me-3 d-flex align-items-center">
@@ -255,5 +254,4 @@ function shufflePlaylist() {
     });
 }
 </script>
-{% endif %}
 {% endblock %}

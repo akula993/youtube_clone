@@ -1,5 +1,7 @@
+
+# Исправленный шаблон templates/notifications/notifications.html:
+
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Уведомления - VidShare{% endblock %}
 
@@ -9,9 +11,6 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Уведомления</h2>
             <div>
-                <a href="{% url 'notification-preferences' %}" class="btn btn-outline-primary me-2">
-                    <i class="fas fa-cog"></i> Настройки
-                </a>
                 {% if notifications %}
                     <button id="markAllRead" class="btn btn-outline-success">
                         <i class="fas fa-check-double"></i> Прочитать все
@@ -26,7 +25,6 @@
                     <div class="notification-item card mb-3 {% if not notification.is_read %}border-primary{% endif %}" data-id="{{ notification.id }}">
                         <div class="card-body">
                             <div class="d-flex align-items-start">
-                                <!-- Аватар отправителя -->
                                 <div class="me-3">
                                     {% if notification.sender %}
                                         <img src="{{ notification.sender.profile_picture.url }}" 
@@ -40,44 +38,15 @@
                                     {% endif %}
                                 </div>
                                 
-                                <!-- Содержимое уведомления -->
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <p class="mb-1 {% if not notification.is_read %}fw-bold{% endif %}">
-                                                {{ notification.message }}
-                                            </p>
-                                            <small class="text-muted">
-                                                <i class="fas fa-clock me-1"></i>
-                                                {{ notification.created_date|timesince }} назад
-                                            </small>
-                                        </div>
-                                        
-                                        <!-- Действия -->
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                                    type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                {% if not notification.is_read %}
-                                                    <li>
-                                                        <a class="dropdown-item mark-read" href="#" data-id="{{ notification.id }}">
-                                                            <i class="fas fa-check me-2"></i>Отметить как прочитанное
-                                                        </a>
-                                                    </li>
-                                                {% endif %}
-                                                <li>
-                                                    <a class="dropdown-item text-danger delete-notification" 
-                                                       href="#" data-id="{{ notification.id }}">
-                                                        <i class="fas fa-trash me-2"></i>Удалить
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                    <p class="mb-1 {% if not notification.is_read %}fw-bold{% endif %}">
+                                        {{ notification.message }}
+                                    </p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ notification.created_date|timesince }} назад
+                                    </small>
                                     
-                                    <!-- Миниатюра видео (если есть) -->
                                     {% if notification.video %}
                                         <div class="mt-2">
                                             <a href="{{ notification.get_absolute_url }}" 
@@ -101,7 +70,6 @@
                                     {% endif %}
                                 </div>
                                 
-                                <!-- Индикатор непрочитанного -->
                                 {% if not notification.is_read %}
                                     <div class="ms-2">
                                         <span class="badge bg-primary rounded-pill">&nbsp;</span>
@@ -112,42 +80,6 @@
                     </div>
                 {% endfor %}
             </div>
-            
-            <!-- Пагинация -->
-            {% if is_paginated %}
-                <nav aria-label="Пагинация уведомлений">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                        
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
-            
         {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-bell fa-4x text-muted mb-3"></i>
@@ -156,108 +88,6 @@
             </div>
         {% endif %}
     </div>
-    
-    <!-- Боковая панель с фильтрами -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Фильтры</h5>
-            </div>
-            <div class="card-body">
-                <div class="list-group list-group-flush">
-                    <a href="?type=all" class="list-group-item list-group-item-action {% if not request.GET.type or request.GET.type == 'all' %}active{% endif %}">
-                        <i class="fas fa-bell me-2"></i>Все уведомления
-                    </a>
-                    <a href="?type=new_video" class="list-group-item list-group-item-action {% if request.GET.type == 'new_video' %}active{% endif %}">
-                        <i class="fas fa-video me-2"></i>Новые видео
-                    </a>
-                    <a href="?type=comment" class="list-group-item list-group-item-action {% if request.GET.type == 'comment' %}active{% endif %}">
-                        <i class="fas fa-comment me-2"></i>Комментарии
-                    </a>
-                    <a href="?type=video_like" class="list-group-item list-group-item-action {% if request.GET.type == 'video_like' %}active{% endif %}">
-                        <i class="fas fa-heart me-2"></i>Лайки
-                    </a>
-                    <a href="?type=new_subscriber" class="list-group-item list-group-item-action {% if request.GET.type == 'new_subscriber' %}active{% endif %}">
-                        <i class="fas fa-user-plus me-2"></i>Подписчики
-                    </a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Статистика -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5>Статистика</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="h4 text-primary">{{ notifications.count }}</div>
-                        <small class="text-muted">Всего</small>
-                    </div>
-                    <div class="col-6">
-                        <div class="h4 text-warning">{{ user.notifications.filter.count }}</div>
-                        <small class="text-muted">Непрочитанных</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // Отметить уведомление как прочитанное
-    $('.mark-read').click(function(e) {
-        e.preventDefault();
-        const notificationId = $(this).data('id');
-        
-        $.post(`/notifications/mark-read/${notificationId}/`, {
-            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-        }).done(function() {
-            location.reload();
-        });
-    });
-    
-    // Отметить все как прочитанные
-    $('#markAllRead').click(function() {
-        $.post('{% url "mark-all-read" %}', {
-            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-        }).done(function() {
-            location.reload();
-        });
-    });
-    
-    // Автоматически отмечать уведомление как прочитанное при клике
-    $('.notification-link').click(function() {
-        const notificationId = $(this).data('id');
-        
-        $.post(`/notifications/mark-read/${notificationId}/`, {
-            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-        });
-    });
-    
-    // Удаление уведомления
-    $('.delete-notification').click(function(e) {
-        e.preventDefault();
-        if (confirm('Удалить это уведомление?')) {
-            const notificationId = $(this).data('id');
-            
-            $.ajax({
-                url: `/notifications/delete/${notificationId}/`,
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
-                }
-            }).done(function() {
-                $(`.notification-item[data-id="${notificationId}"]`).fadeOut(300, function() {
-                    $(this).remove();
-                });
-            });
-        }
-    });
-});
-</script>
-{% endblock %}

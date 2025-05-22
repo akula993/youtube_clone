@@ -53,7 +53,7 @@
                         {% for video in videos %}
                             <div class="list-group-item">
                                 <div class="d-flex">
-                                    <div class="mr-3">
+                                    <div class="me-3">
                                         <a href="{% url 'video-detail' video.pk %}">
                                             <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" width="120" height="68">
                                         </a>

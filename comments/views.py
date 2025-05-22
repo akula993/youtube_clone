@@ -3,9 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Comment
 from videos.models import Video
-# Импортируем Notification из правильного места
-from notifications.models import Notification
-from notifications.utils import NotificationService
 
 
 @login_required
@@ -20,9 +17,6 @@ def create_comment(request, video_id):
                 author=request.user,
                 video=video
             )
-
-            # Создаем уведомление о новом комментарии
-            NotificationService.notify_comment(comment)
 
             # Если запрос AJAX
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -54,9 +48,6 @@ def reply_comment(request, comment_id):
                 parent=parent_comment
             )
 
-            # Создаем уведомление об ответе на комментарий
-            NotificationService.notify_comment_reply(reply)
-
             # Если запрос AJAX
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -78,15 +69,12 @@ def like_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     user = request.user
 
-    # Если пользователь уже лайкнул, то убираем лайк
     if user in comment.likes.all():
         comment.likes.remove(user)
         liked = False
     else:
-        # Убираем дизлайк, если есть
         if user in comment.dislikes.all():
             comment.dislikes.remove(user)
-        # Добавляем лайк
         comment.likes.add(user)
         liked = True
 
@@ -102,15 +90,12 @@ def dislike_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     user = request.user
 
-    # Если пользователь уже дизлайкнул, то убираем дизлайк
     if user in comment.dislikes.all():
         comment.dislikes.remove(user)
         disliked = False
     else:
-        # Убираем лайк, если есть
         if user in comment.likes.all():
             comment.likes.remove(user)
-        # Добавляем дизлайк
         comment.dislikes.add(user)
         disliked = True
 
@@ -126,11 +111,9 @@ def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     video_id = comment.video.id
 
-    # Только автор или владелец видео может удалить комментарий
     if request.user == comment.author or request.user == comment.video.uploader:
         comment.delete()
 
-        # Если запрос AJAX
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
 

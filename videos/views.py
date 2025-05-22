@@ -3,8 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse
-from django.db.models import Q
-from .models import Video, Category
+from django.db.models import Q, F, Count  # ДОБАВИЛИ Count
+from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+from .models import Video, Category, WatchHistory
 from users.models import CustomUser
 from django.http import JsonResponse
 
@@ -70,7 +73,7 @@ class VideoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class UserVideoListView(ListView):
     model = Video
-    template_name = 'videos/user_videos.html'
+    template_name = 'users/user_videos.html'
     context_object_name = 'videos'
     paginate_by = 12
 
@@ -83,7 +86,6 @@ class UserVideoListView(ListView):
         user = get_object_or_404(CustomUser, username=self.kwargs.get('username'))
         context['channel'] = user
 
-        # Проверка, подписан ли текущий пользователь на канал
         if self.request.user.is_authenticated:
             context['is_subscribed'] = user.subscribers.filter(id=self.request.user.id).exists()
 
@@ -126,93 +128,8 @@ class SearchResultsView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['query'] = self.request.GET.get('q', '')
+        context['categories'] = Category.objects.all()
         return context
-
-
-@login_required
-def like_video(request, pk):
-    video = get_object_or_404(Video, pk=pk)
-    user = request.user
-
-    # Если пользователь уже лайкнул, то убираем лайк
-    if user in video.likes.all():
-        video.likes.remove(user)
-        liked = False
-    else:
-        # Убираем дизлайк, если есть
-        if user in video.dislikes.all():
-            video.dislikes.remove(user)
-        # Добавляем лайк
-        video.likes.add(user)
-        liked = True
-
-    return JsonResponse({
-        'likes': video.get_like_count(),
-        'dislikes': video.get_dislike_count(),
-        'liked': liked
-    })
-
-
-@login_required
-def dislike_video(request, pk):
-    video = get_object_or_404(Video, pk=pk)
-    user = request.user
-
-    # Если пользователь уже дизлайкнул, то убираем дизлайк
-    if user in video.dislikes.all():
-        video.dislikes.remove(user)
-        disliked = False
-    else:
-        # Убираем лайк, если есть
-        if user in video.likes.all():
-            video.likes.remove(user)
-        # Добавляем дизлайк
-        video.dislikes.add(user)
-        disliked = True
-
-    return JsonResponse({
-        'likes': video.get_like_count(),
-        'dislikes': video.get_dislike_count(),
-        'disliked': disliked
-    })
-
-
-@login_required
-def subscribe_to_channel(request, pk):
-    channel = get_object_or_404(CustomUser, pk=pk)
-    user = request.user
-
-    if channel == user:
-        return JsonResponse({'error': 'Вы не можете подписаться на себя'}, status=400)
-
-    # Если пользователь уже подписан, то отписываем
-    if user in channel.subscribers.all():
-        channel.subscribers.remove(user)
-        subscribed = False
-    else:
-        # Подписываем пользователя
-        channel.subscribers.add(user)
-        subscribed = True
-
-    return JsonResponse({
-        'subscribers': channel.subscribers.count(),
-        'subscribed': subscribed
-    })
-
-
-from recommendations.utils import RecommendationEngine
-from .models import WatchHistory, VideoRecommendation
-
-
-class RecommendedVideosView(LoginRequiredMixin, ListView):
-    model = Video
-    template_name = 'videos/recommended.html'
-    context_object_name = 'videos'
-    paginate_by = 20
-
-    def get_queryset(self):
-        engine = RecommendationEngine(self.request.user)
-        return engine.get_recommendations(50)
 
 
 class TrendingVideosView(ListView):
@@ -221,18 +138,13 @@ class TrendingVideosView(ListView):
     context_object_name = 'videos'
     paginate_by = 20
 
-    def get_queryset(self):
-        from django.utils import timezone
-        from datetime import timedelta
 
-        # Видео за последнюю неделю, отсортированные по популярности
+    def get_queryset(self):
+        # Упрощенная версия - просто по просмотрам за неделю
         week_ago = timezone.now() - timedelta(days=7)
         return Video.objects.filter(
             created_date__gte=week_ago
-        ).annotate(
-            engagement=models.F('views') + models.F('likes__count') * 10
-        ).order_by('-engagement')
-
+        ).order_by('-views')
 
 class SubscriptionsView(LoginRequiredMixin, ListView):
     model = Video
@@ -270,42 +182,63 @@ class LikedVideosView(LoginRequiredMixin, ListView):
 
 
 @login_required
-def add_to_history(request, video_id):
-    """Добавить видео в историю просмотров"""
-    video = get_object_or_404(Video, id=video_id)
+def like_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    user = request.user
 
-    history_item, created = WatchHistory.objects.get_or_create(
-        user=request.user,
-        video=video,
-        defaults={'watch_duration': 0}
-    )
+    if user in video.likes.all():
+        video.likes.remove(user)
+        liked = False
+    else:
+        if user in video.dislikes.all():
+            video.dislikes.remove(user)
+        video.likes.add(user)
+        liked = True
 
-    if not created:
-        # Обновляем время последнего просмотра
-        history_item.watched_at = timezone.now()
-        history_item.save()
-
-    return JsonResponse({'success': True})
+    return JsonResponse({
+        'likes': video.get_like_count(),
+        'dislikes': video.get_dislike_count(),
+        'liked': liked
+    })
 
 
 @login_required
-def update_watch_duration(request, video_id):
-    """Обновить продолжительность просмотра"""
-    if request.method == 'POST':
-        video = get_object_or_404(Video, id=video_id)
-        duration = request.POST.get('duration', 0)
+def dislike_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    user = request.user
 
-        try:
-            history_item = WatchHistory.objects.get(user=request.user, video=video)
-            history_item.watch_duration = max(history_item.watch_duration, int(duration))
-            history_item.save()
-        except WatchHistory.DoesNotExist:
-            WatchHistory.objects.create(
-                user=request.user,
-                video=video,
-                watch_duration=int(duration)
-            )
+    if user in video.dislikes.all():
+        video.dislikes.remove(user)
+        disliked = False
+    else:
+        if user in video.likes.all():
+            video.likes.remove(user)
+        video.dislikes.add(user)
+        disliked = True
 
-        return JsonResponse({'success': True})
+    return JsonResponse({
+        'likes': video.get_like_count(),
+        'dislikes': video.get_dislike_count(),
+        'disliked': disliked
+    })
 
-    return JsonResponse({'success': False})
+
+@login_required
+def subscribe_to_channel(request, pk):
+    channel = get_object_or_404(CustomUser, pk=pk)
+    user = request.user
+
+    if channel == user:
+        return JsonResponse({'error': 'Вы не можете подписаться на себя'}, status=400)
+
+    if user in channel.subscribers.all():
+        channel.subscribers.remove(user)
+        subscribed = False
+    else:
+        channel.subscribers.add(user)
+        subscribed = True
+
+    return JsonResponse({
+        'subscribers': channel.subscribers.count(),
+        'subscribed': subscribed
+    })

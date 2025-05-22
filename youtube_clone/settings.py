@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     # Сторонние приложения
     'crispy_forms',
+
+    'crispy_bootstrap4',
     # Наши приложения
     'videos.apps.VideosConfig',
     'comments.apps.CommentsConfig',
@@ -107,3 +109,12 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # Login/Logout redirects
 LOGIN_REDIRECT_URL = 'home'
 LOGIN_URL = 'login'
+
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}

@@ -1,10 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
-</body>
-</html>
+{% block title %}
+    {% if form.instance.pk %}Редактировать видео{% else %}Загрузить видео{% endif %} - VidShare
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    {% if form.instance.pk %}
+                        <i class="fas fa-edit"></i> Редактировать видео
+                    {% else %}
+                        <i class="fas fa-upload"></i> Загрузить видео
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <fieldset class="form-group">
+                        {{ form|crispy }}
+                    </fieldset>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">
+                            {% if form.instance.pk %}Обновить{% else %}Загрузить{% endif %}
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'video-detail' form.instance.pk %}{% else %}{% url 'home' %}{% endif %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Предпросмотр миниатюры
+    $('#id_thumbnail').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#thumbnailPreview').remove();
+                $('<img id="thumbnailPreview" src="' + e.target.result + '" class="img-thumbnail mt-2" style="max-width: 200px;">').insertAfter('#id_thumbnail');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Информация о выбранном видео файле
+    $('#id_file').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const size = (file.size / 1024 / 1024).toFixed(2);
+            $('#fileInfo').remove();
+            $('<div id="fileInfo" class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> Файл: ' + file.name + ' (' + size + ' МБ)</div>').insertAfter('#id_file');
+        }
+    });
+});
+</script>
+{% endblock %}

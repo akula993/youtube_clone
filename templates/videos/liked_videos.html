@@ -1,17 +1,13 @@
+
 {% extends 'base.html' %}
 
-{% block title %}{{ category.name }} - VidShare{% endblock %}
+{% block title %}Понравившиеся видео - VidShare{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="d-flex align-items-center mb-4">
-            <i class="fas fa-tag fa-2x text-primary me-3"></i>
-            <div>
-                <h2>{{ category.name }}</h2>
-                <p class="text-muted mb-0">{{ videos.count }} видео в этой категории</p>
-            </div>
-        </div>
+        <h2><i class="fas fa-thumbs-up me-3"></i>Понравившиеся видео</h2>
+        <p class="text-muted mb-4">Видео, которые вам понравились</p>
         
         {% if videos %}
             <div class="row">
@@ -44,37 +40,11 @@
                     </div>
                 {% endfor %}
             </div>
-            
-            <!-- Пагинация -->
-            {% if is_paginated %}
-                <nav aria-label="Пагинация видео">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
-                            </li>
-                        {% endif %}
-                        
-                        <li class="page-item active">
-                            <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
-                        </li>
-                        
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
         {% else %}
             <div class="text-center py-5">
-                <i class="fas fa-video fa-4x text-muted mb-3"></i>
-                <h3 class="text-muted">В этой категории пока нет видео</h3>
-                <p class="text-muted">Станьте первым, кто загрузит видео в категорию "{{ category.name }}"</p>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'video-create' %}" class="btn btn-primary">Загрузить видео</a>
-                {% endif %}
+                <i class="fas fa-thumbs-up fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">Нет понравившихся видео</h3>
+                <p class="text-muted">Ставьте лайки видео, чтобы видеть их здесь</p>
             </div>
         {% endif %}
     </div>

@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -14,6 +15,7 @@ urlpatterns = [
     path('', include('videos.urls')),
     path('playlists/', include('playlists.urls')),
     path('notifications/', include('notifications.urls')),
+    path('comments/', include('comments.urls')),  # ДОБАВЬТЕ ЭТУ СТРОКУ
     path('api/', include('api.urls')),
 ]
 
