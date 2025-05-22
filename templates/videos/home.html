@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}VidShare - Главная{% endblock %}
+
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="category-scroll">
+                <a href="{% url 'home' %}" class="category-badge {% if not category %}active{% endif %}">Все</a>
+                {% for cat in categories %}
+                    <a href="{% url 'category-videos' cat.pk %}" class="category-badge {% if category.id == cat.id %}active{% endif %}">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if videos %}
+            {% for video in videos %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card video-card h-100">
+                        <a href="{% url 'video-detail' video.pk %}" class="video-thumbnail">
+                            <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                            <div class="duration">12:34</div>
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="{% url 'video-detail' video.pk %}">{{ video.title }}</a></h5>
+                            <div class="d-flex align-items-center">
+                                <a href="{% url 'user-videos' video.uploader.username %}">
+                                    <img src="{{ video.uploader.profile_picture.url }}" class="rounded-circle mr-2" width="30" height="30">
+                                </a>
+                                <div>
+                                    <a href="{% url 'user-videos' video.uploader.username %}" class="text-dark uploader-name">{{ video.uploader.username }}</a>
+                                    <div class="text-muted small">{{ video.views }} просмотров • {{ video.created_date|timesince }} назад</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <h3>Нет доступных видео</h3>
+                {% if request.GET.q %}
+                    <p>По запросу "{{ request.GET.q }}" ничего не найдено.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if is_paginated %}
+        <div class="d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">&laquo; Первая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

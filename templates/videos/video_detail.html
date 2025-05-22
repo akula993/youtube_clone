@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ video.title }} - VidShare{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Видеоплеер -->
+        <div class="embed-responsive embed-responsive-16by9 mb-3">
+            <video class="embed-responsive-item" controls autoplay poster="{{ video.thumbnail.url }}">
+                <source src="{{ video.file.url }}" type="video/mp4">
+                Ваш браузер не поддерживает HTML5 видео.
+            </video>
+        </div>
+        
+        <!-- Информация о видео -->
+        <div class="video-info mb-4">
+            <h3>{{ video.title }}</h3>
+            <div class="d-flex justify-content-between align-items-center my-3">
+                <div class="video-meta">
+                    <span class="mr-3">{{ video.views }} просмотров</span>
+                    <span>{{ video.created_date|date:"d.m.Y" }}</span>
+                </div>
+                <div class="video-actions">
+                    <button id="likeBtn" class="btn btn-sm {% if user in video.likes.all %}btn-primary{% else %}btn-outline-primary{% endif %}" data-id="{{ video.pk }}">
+                        <i class="fas fa-thumbs-up"></i> <span id="likeCount">{{ video.get_like_count }}</span>
+                    </button>
+                    <button id="dislikeBtn" class="btn btn-sm {% if user in video.dislikes.all %}btn-danger{% else %}btn-outline-danger{% endif %}" data-id="{{ video.pk }}">
+                        <i class="fas fa-thumbs-down"></i> <span id="dislikeCount">{{ video.get_dislike_count }}</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-share"></i> Поделиться
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-list-ul"></i> Сохранить
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Автор видео -->
+            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'user-videos' video.uploader.username %}">
+                        <img src="{{ video.uploader.profile_picture.url }}" alt="{{ video.uploader.username }}" class="rounded-circle mr-3" width="50" height="50">
+                    </a>
+                    <div>
+                        <h5 class="mb-0"><a href="{% url 'user-videos' video.uploader.username %}" class="text-dark">{{ video.uploader.username }}</a></h5>
+                        <small class="text-muted">{{ video.uploader.subscribers.count }} подписчиков</small>
+                    </div>
+                </div>
+                {% if user.is_authenticated and user != video.uploader %}
+                    <button id="subscribeBtn" class="btn {% if user in video.uploader.subscribers.all %}btn-secondary{% else %}btn-danger{% endif %}" data-id="{{ video.uploader.pk }}">
+                        {% if user in video.uploader.subscribers.all %}Отписаться{% else %}Подписаться{% endif %}
+                    </button>
+                {% elif user == video.uploader %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="videoOptions" data-toggle="dropdown">
+                            Управление видео
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="{% url 'video-update' video.pk %}">Редактировать</a>
+                            <a class="dropdown-item text-danger" href="{% url 'video-delete' video.pk %}">Удалить</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Описание видео -->
+            <div class="video-description bg-light p-3 rounded">
+                <div class="collapse" id="collapseDescription">
+                    <p>{{ video.description|linebreaks }}</p>
+                    <div class="video-categories">
+                        {% for category in video.categories.all %}
+                            <a href="{% url 'category-videos' category.pk %}" class="badge badge-pill badge-secondary">{{ category.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button class="btn btn-link p-0" data-toggle="collapse" data-target="#collapseDescription">
+                    Показать описание
+                </button>
+            </div>
+        </div>
+        
+        <!-- Секция комментариев -->
+        <div class="comments-section">
+            <h4>{{ comments.count }} комментариев</h4>
+            
+            {% if user.is_authenticated %}
+                <form id="commentForm" method="POST" action="{% url 'create-comment' video.pk %}" class="mb-4">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-start">
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle mr-3" width="40" height="40">
+                        <div class="flex-grow-1">
+                            <div class="form-group mb-1">
+                                <textarea name="content" class="form-control" rows="1" placeholder="Добавьте комментарий..."></textarea>
+                            </div>
+                            <div class="text-right comment-actions" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-link cancel-comment">Отмена</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Комментировать</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+            
+            <!-- Список комментариев -->
+            <div id="comments-list">
+                {% for comment in comments %}
+                    <div class="comment mb-3" id="comment-{{ comment.id }}">
+                        <div class="d-flex">
+                            <a href="{% url 'user-videos' comment.author.username %}">
+                                <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}" class="rounded-circle mr-3" width="40" height="40">
+                            </a>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <a href="{% url 'user-videos' comment.author.username %}" class="font-weight-bold mr-2">{{ comment.author.username }}</a>
+                                    <small class="text-muted">{{ comment.created_date|timesince }} назад</small>
+                                </div>
+                                <p class="mb-2">{{ comment.content }}</p>
+                                <div class="comment-actions">
+                                    <button class="btn btn-sm btn-link like-comment {% if user in comment.likes.all %}text-primary{% endif %}" data-id="{{ comment.id }}">
+                                        <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ comment.likes.count }}</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-link dislike-comment {% if user in comment.dislikes.all %}text-danger{% endif %}" data-id="{{ comment.id }}">
+                                        <i class="fas fa-thumbs-down"></i> <span class="dislike-count">{{ comment.dislikes.count }}</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-link reply-btn" data-id="{{ comment.id }}">Ответить</button>
+                                    {% if user == comment.author or user == video.uploader %}
+                                        <button class="btn btn-sm btn-link text-danger delete-comment" data-id="{{ comment.id }}">Удалить</button>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Форма для ответа на комментарий -->
+                                <div class="reply-form mt-2" id="reply-form-{{ comment.id }}" style="display: none;">
+                                    <form method="POST" action="{% url 'reply-comment' comment.id %}">
+                                        {% csrf_token %}
+                                        <div class="form-group mb-2">
+                                            <textarea name="content" class="form-control" rows="1" placeholder="Добавьте ответ..."></textarea>
+                                        </div>
+                                        <div class="text-right">
+                                            <button type="button" class="btn btn-sm btn-link cancel-reply">Отмена</button>
+                                            <button type="submit" class="btn btn-sm btn-primary">Ответить</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <!-- Ответы на комментарий -->
+                                <div class="replies mt-3">
+                                    {% for reply in comment.replies.all %}
+                                        <div class="reply d-flex mb-2" id="comment-{{ reply.id }}">
+                                            <a href="{% url 'user-videos' reply.author.username %}">
+                                                <img src="{{ reply.author.profile_picture.url }}" alt="{{ reply.author.username }}" class="rounded-circle mr-2" width="30" height="30">
+                                            </a>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <a href="{% url 'user-videos' reply.author.username %}" class="font-weight-bold mr-2">{{ reply.author.username }}</a>
+                                                    <small class="text-muted">{{ reply.created_date|timesince }} назад</small>
+                                                </div>
+                                                <p class="mb-1">{{ reply.content }}</p>
+                                                <div class="comment-actions">
+                                                    <button class="btn btn-sm btn-link like-comment {% if user in reply.likes.all %}text-primary{% endif %}" data-id="{{ reply.id }}">
+                                                        <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ reply.likes.count }}</span>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-link dislike-comment {% if user in reply.dislikes.all %}text-danger{% endif %}" data-id="{{ reply.id }}">
+                                                        <i class="fas fa-thumbs-down"></i> <span class="dislike-count">{{ reply.dislikes.count }}</span>
+                                                    </button>
+                                                    {% if user == reply.author or user == video.uploader %}
+                                                        <button class="btn btn-sm btn-link text-danger delete-comment" data-id="{{ reply.id }}">Удалить</button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4">
+                        <p>Комментарии отсутствуют. Будьте первым!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Боковая панель с рекомендациями -->
+    <div class="col-lg-4">
+        <h4 class="mb-3">Рекомендуемые видео</h4>
+        {% for video in video.uploader.videos.all|slice:":8" %}
+            {% if video != object %}
+                <div class="media mb-3">
+                    <a href="{% url 'video-detail' video.pk %}" class="mr-3 position-relative">
+                        <img src="{{ video.thumbnail.url }}" width="120" height="68" alt="{{ video.title }}">
+                        <span class="position-absolute badge badge-dark" style="bottom: 0; right: 0;">12:34</span>
+                    </a>
+                    <div class="media-body">
+                        <h6 class="mt-0"><a href="{% url 'video-detail' video.pk %}" class="text-dark">{{ video.title }}</a></h6>
+                        <small class="text-muted">{{ video.uploader.username }}</small><br>
+                        <small class="text-muted">{{ video.views }} просмотров</small>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Обработка фокуса и отмены комментария
+        $('textarea[name="content"]').focus(function() {
+            $(this).parent().siblings('.comment-actions').show();
+        });
+        
+        $('.cancel-comment').click(function() {
+            $(this).parent().hide();
+            $(this).parent().siblings('.form-group').find('textarea').val('');
+        });
+        
+        // Кнопка "Ответить"
+        $('.reply-btn').click(function() {
+            const commentId = $(this).data('id');
+            $('#reply-form-' + commentId).toggle();
+        });
+        
+        $('.cancel-reply').click(function() {
+            $(this).closest('.reply-form').hide();
+        });
+        
+        // Обработка лайков и дизлайков для видео
+        $('#likeBtn').click(function() {
+            const videoId = $(this).data('id');
+            $.ajax({
+                url: `/video/${videoId}/like/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function(data) {
+                    $('#likeCount').text(data.likes);
+                    $('#dislikeCount').text(data.dislikes);
+                    
+                    if (data.liked) {
+                        $('#likeBtn').removeClass('btn-outline-primary').addClass('btn-primary');
+                        $('#dislikeBtn').removeClass('btn-danger').addClass('btn-outline-danger');
+                    } else {
+                        $('#likeBtn').removeClass('btn-primary').addClass('btn-outline-primary');
+                    }
+                }
+            });
+        });
+        
+        $('#dislikeBtn').click(function() {
+            const videoId = $(this).data('id');
+            $.ajax({
+                url: `/video/${videoId}/dislike/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function(data) {
+                    $('#likeCount').text(data.likes);
+                    $('#dislikeCount').text(data.dislikes);
+                    
+                    if (data.disliked) {
+                        $('#dislikeBtn').removeClass('btn-outline-danger').addClass('btn-danger');
+                        $('#likeBtn').removeClass('btn-primary').addClass('btn-outline-primary');
+                    } else {
+                        $('#dislikeBtn').removeClass('btn-danger').addClass('btn-outline-danger');
+                    }
+                }
+            });
+        });
+        
+        // Обработка подписки
+        $('#subscribeBtn').click(function() {
+            const channelId = $(this).data('id');
+            $.ajax({
+                url: `/video/${channelId}/subscribe/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function(data) {
+                    if (data.subscribed) {
+                        $('#subscribeBtn').removeClass('btn-danger').addClass('btn-secondary').text('Отписаться');
+                    } else {
+                        $('#subscribeBtn').removeClass('btn-secondary').addClass('btn-danger').text('Подписаться');
+                    }
+                }
+            });
+        });
+        
+        // Обработка лайков и дизлайков для комментариев
+        $('.like-comment').click(function() {
+            const commentId = $(this).data('id');
+            const $button = $(this);
+            
+            $.ajax({
+                url: `/comments/like/${commentId}/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function(data) {
+                    $button.find('.like-count').text(data.likes);
+                    $button.closest('.comment-actions').find('.dislike-comment .dislike-count').text(data.dislikes);
+                    
+                    if (data.liked) {
+                        $button.addClass('text-primary');
+                        $button.closest('.comment-actions').find('.dislike-comment').removeClass('text-danger');
+                    } else {
+                        $button.removeClass('text-primary');
+                    }
+                }
+            });
+        });
+        
+        $('.dislike-comment').click(function() {
+            const commentId = $(this).data('id');
+            const $button = $(this);
+            
+            $.ajax({
+                url: `/comments/dislike/${commentId}/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function(data) {
+                    $button.find('.dislike-count').text(data.dislikes);
+                    $button.closest('.comment-actions').find('.like-comment .like-count').text(data.likes);
+                    
+                    if (data.disliked) {
+                        $button.addClass('text-danger');
+                        $button.closest('.comment-actions').find('.like-comment').removeClass('text-primary');
+                    } else {
+                        $button.removeClass('text-danger');
+                    }
+                }
+            });
+        });
+        
+        // Удаление комментария
+        $('.delete-comment').click(function() {
+            if (confirm('Вы уверены, что хотите удалить этот комментарий?')) {
+                const commentId = $(this).data('id');
+                
+                $.ajax({
+                    url: `/comments/delete/${commentId}/`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            $('#comment-' + commentId).fadeOut(300, function() {
+                                $(this).remove();
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

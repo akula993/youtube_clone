@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ user.username }} - Профиль{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle mb-3" width="150" height="150">
+                <h3 class="card-title">{{ user.username }}</h3>
+                <p class="text-muted">{{ user.email }}</p>
+                {% if user.subscribers.count > 0 %}
+                    <p>{{ user.subscribers.count }} подписчиков</p>
+                {% endif %}
+                {% if user.bio %}
+                    <p>{{ user.bio }}</p>
+                {% endif %}
+                {% if user.website %}
+                    <p><a href="{{ user.website }}" target="_blank">{{ user.website }}</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Редактировать профиль</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <fieldset class="form-group">
+                        {{ u_form|crispy }}
+                        {{ p_form|crispy }}
+                    </fieldset>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Обновить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h4>Мои видео</h4>
+            </div>
+            <div class="card-body">
+                {% if videos %}
+                    <div class="list-group">
+                        {% for video in videos %}
+                            <div class="list-group-item">
+                                <div class="d-flex">
+                                    <div class="mr-3">
+                                        <a href="{% url 'video-detail' video.pk %}">
+                                            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" width="120" height="68">
+                                        </a>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5><a href="{% url 'video-detail' video.pk %}" class="text-dark">{{ video.title }}</a></h5>
+                                        <p class="text-muted mb-0">{{ video.views }} просмотров • {{ video.created_date|date:"d.m.Y" }}</p>
+                                    </div>
+                                    <div class="video-actions">
+                                        <a href="{% url 'video-update' video.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="{% url 'video-delete' video.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>У вас еще нет загруженных видео.</p>
+                        <a href="{% url 'video-create' %}" class="btn btn-primary">Загрузить видео</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
