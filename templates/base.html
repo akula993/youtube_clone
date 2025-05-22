@@ -5,78 +5,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}VidShare{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block styles %}{% endblock %}
 </head>
 <body>
-    <header class="mb-4">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
-                <a class="navbar-brand" href="{% url 'home' %}">VidShare</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <!-- Логотип и меню -->
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+                    <i class="fas fa-bars"></i>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <form class="form-inline my-2 my-lg-0 mx-auto" action="{% url 'search-results' %}" method="GET">
-                        <div class="input-group" style="width: 300px;">
-                            <input type="text" name="q" class="form-control" placeholder="Поиск видео..." value="{{ request.GET.q }}">
-                            <div class="input-group-append">
-                                <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
-                            </div>
-                        </div>
-                    </form>
-                    <ul class="navbar-nav ml-auto">
-                        {% if user.is_authenticated %}
-                            <li class="nav-item">
-                                <a class="nav-link btn btn-sm btn-danger mr-2" href="{% url 'video-create' %}">
-                                    <i class="fas fa-upload"></i> Загрузить
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                                    <img src="{{ user.profile_picture.url }}" class="rounded-circle" width="25" height="25">
-                                    {{ user.username }}
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="{% url 'profile' %}">Мой профиль</a>
-                                    <a class="dropdown-item" href="{% url 'user-videos' user.username %}">Мой канал</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="{% url 'logout' %}">Выйти</a>
-                                </div>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'login' %}">Войти</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </div>
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <i class="fab fa-youtube text-danger"></i> VidShare
+                </a>
             </div>
-        </nav>
-    </header>
 
-    <main class="container mb-5">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
+            <!-- Поиск -->
+            <div class="d-flex flex-grow-1 justify-content-center">
+                <form class="d-flex search-form" action="{% url 'search-results' %}" method="GET">
+                    <div class="input-group" style="max-width: 600px; width: 100%;">
+                        <input type="text" name="q" class="form-control" placeholder="Поиск видео..." value="{{ request.GET.q }}" id="searchInput">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Пользовательское меню -->
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <!-- Уведомления -->
+<!-- Исправленный фрагмент навигации: -->
+<div class="dropdown me-3">
+    <button class="btn btn-outline-light position-relative" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
+            {{ user.user_notifications.filter.count }}
+        </span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end notifications-dropdown" style="width: 300px;">
+        <div class="dropdown-header d-flex justify-content-between">
+            <span>Уведомления</span>
+            <a href="{% url 'mark-all-read' %}" class="text-decoration-none">Прочитать все</a>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div id="notificationsList" style="max-height: 300px; overflow-y: auto;">
+            {% for notification in user.user_notifications.all|slice:":5" %}
+                <a href="{{ notification.get_absolute_url }}" class="dropdown-item {% if not notification.is_read %}bg-light{% endif %}">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0 me-2">
+                            <i class="fas fa-circle text-primary" style="font-size: 8px;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small">{{ notification.message|truncatechars:60 }}</div>
+                            <div class="text-muted" style="font-size: 11px;">{{ notification.created_date|timesince }} назад</div>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="dropdown-item text-center text-muted">Нет уведомлений</div>
             {% endfor %}
+        </div>
+        <div class="dropdown-divider"></div>
+        <a href="{% url 'notifications' %}" class="dropdown-item text-center">Все уведомления</a>
+    </div>
+</div>
+                    <!-- Кнопка загрузки -->
+                    <a href="{% url 'video-create' %}" class="btn btn-danger me-3">
+                        <i class="fas fa-plus"></i> Создать
+                    </a>
+
+                    <!-- Профиль пользователя -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                            <img src="{{ user.profile_picture.url }}" class="rounded-circle me-2" width="25" height="25">
+                            {{ user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'user-videos' user.username %}"><i class="fas fa-video me-2"></i>Мой канал</a></li>
+                            <li><a class="dropdown-item" href="{% url 'playlist-list' %}"><i class="fas fa-list me-2"></i>Мои плейлисты</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'subscriptions' %}"><i class="fas fa-users me-2"></i>Подписки</a></li>
+                            <li><a class="dropdown-item" href="{% url 'history' %}"><i class="fas fa-history me-2"></i>История</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Выйти</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Войти</a>
+                    <a href="{% url 'register' %}" class="btn btn-danger">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Боковая панель -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">
+                <i class="fab fa-youtube text-danger"></i> VidShare
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="list-group list-group-flush">
+                <a href="{% url 'home' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <i class="fas fa-home me-3"></i>Главная
+                </a>
+                <a href="{% url 'trending' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-fire me-3"></i>В тренде
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'subscriptions' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-3"></i>Подписки
+                    </a>
+                    <hr class="my-2">
+                    <a href="{% url 'history' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history me-3"></i>История
+                    </a>
+                    <a href="{% url 'liked-videos' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-thumbs-up me-3"></i>Понравившиеся
+                    </a>
+                    <a href="{% url 'playlist-list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list me-3"></i>Плейлисты
+                    </a>
+                    <hr class="my-2">
+                {% endif %}
+                
+                <!-- Категории -->
+                <div class="px-3 py-2">
+                    <small class="text-muted text-uppercase">Категории</small>
+                </div>
+                {% for category in categories %}
+                    <a href="{% url 'category-videos' category.pk %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tag me-3"></i>{{ category.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <main class="container-fluid" style="margin-top: 76px; padding-bottom: 60px;">
+        {% if messages %}
+            <div id="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
         
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Футер -->
     <footer class="bg-dark text-light py-4 mt-5">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5>VidShare</h5>
+                    <h5><i class="fab fa-youtube text-danger"></i> VidShare</h5>
                     <p>Платформа для обмена видео</p>
                 </div>
                 <div class="col-md-6 text-md-end">
@@ -85,6 +181,7 @@
                         <li><a href="{% url 'home' %}" class="text-light">Главная</a></li>
                         <li><a href="#" class="text-light">О нас</a></li>
                         <li><a href="#" class="text-light">Правила</a></li>
+                        <li><a href="#" class="text-light">Конфиденциальность</a></li>
                     </ul>
                 </div>
             </div>
@@ -96,8 +193,8 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
     {% block scripts %}{% endblock %}
 </body>

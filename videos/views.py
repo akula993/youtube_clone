@@ -198,3 +198,114 @@ def subscribe_to_channel(request, pk):
         'subscribers': channel.subscribers.count(),
         'subscribed': subscribed
     })
+
+
+from recommendations.utils import RecommendationEngine
+from .models import WatchHistory, VideoRecommendation
+
+
+class RecommendedVideosView(LoginRequiredMixin, ListView):
+    model = Video
+    template_name = 'videos/recommended.html'
+    context_object_name = 'videos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        engine = RecommendationEngine(self.request.user)
+        return engine.get_recommendations(50)
+
+
+class TrendingVideosView(ListView):
+    model = Video
+    template_name = 'videos/trending.html'
+    context_object_name = 'videos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Видео за последнюю неделю, отсортированные по популярности
+        week_ago = timezone.now() - timedelta(days=7)
+        return Video.objects.filter(
+            created_date__gte=week_ago
+        ).annotate(
+            engagement=models.F('views') + models.F('likes__count') * 10
+        ).order_by('-engagement')
+
+
+class SubscriptionsView(LoginRequiredMixin, ListView):
+    model = Video
+    template_name = 'videos/subscriptions.html'
+    context_object_name = 'videos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        subscribed_users = self.request.user.subscribed_to.all()
+        return Video.objects.filter(
+            uploader__in=subscribed_users
+        ).order_by('-created_date')
+
+
+class HistoryView(LoginRequiredMixin, ListView):
+    model = WatchHistory
+    template_name = 'videos/history.html'
+    context_object_name = 'history_items'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return WatchHistory.objects.filter(
+            user=self.request.user
+        ).select_related('video', 'video__uploader').order_by('-watched_at')
+
+
+class LikedVideosView(LoginRequiredMixin, ListView):
+    model = Video
+    template_name = 'videos/liked_videos.html'
+    context_object_name = 'videos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return self.request.user.liked_videos.all().order_by('-created_date')
+
+
+@login_required
+def add_to_history(request, video_id):
+    """Добавить видео в историю просмотров"""
+    video = get_object_or_404(Video, id=video_id)
+
+    history_item, created = WatchHistory.objects.get_or_create(
+        user=request.user,
+        video=video,
+        defaults={'watch_duration': 0}
+    )
+
+    if not created:
+        # Обновляем время последнего просмотра
+        history_item.watched_at = timezone.now()
+        history_item.save()
+
+    return JsonResponse({'success': True})
+
+
+@login_required
+def update_watch_duration(request, video_id):
+    """Обновить продолжительность просмотра"""
+    if request.method == 'POST':
+        video = get_object_or_404(Video, id=video_id)
+        duration = request.POST.get('duration', 0)
+
+        try:
+            history_item = WatchHistory.objects.get(user=request.user, video=video)
+            history_item.watch_duration = max(history_item.watch_duration, int(duration))
+            history_item.save()
+        except WatchHistory.DoesNotExist:
+            WatchHistory.objects.create(
+                user=request.user,
+                video=video,
+                watch_duration=int(duration)
+            )
+
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'success': False})

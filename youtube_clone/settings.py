@@ -24,6 +24,9 @@ INSTALLED_APPS = [
     # Наши приложения
     'videos.apps.VideosConfig',
     'comments.apps.CommentsConfig',
+    'playlists.apps.PlaylistsConfig',
+    'notifications.apps.NotificationsConfig',
+    'recommendations.apps.RecommendationsConfig'
 ]
 
 MIDDLEWARE = [

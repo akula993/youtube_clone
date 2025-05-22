@@ -321,3 +321,349 @@ textarea:focus {
     background-color: #167ac6;
     border-color: #167ac6;
 }
+/* Уведомления */
+.notifications-dropdown {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-item.border-primary {
+    border-left: 4px solid #0d6efd !important;
+}
+
+.notification-link:hover {
+    background-color: #e9ecef !important;
+}
+
+/* Плейлисты */
+.playlist-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.playlist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.playlist-video-item {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.playlist-video-item:hover {
+    background-color: #f8f9fa;
+}
+
+.playlist-video-item.dragging {
+    opacity: 0.5;
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Видеокарточки */
+.video-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.video-thumbnail {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.video-thumbnail img {
+    transition: transform 0.3s ease;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.video-thumbnail:hover img {
+    transform: scale(1.05);
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Поиск */
+.search-form .input-group {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.search-form .form-control {
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-radius: 20px 0 0 20px;
+}
+
+.search-form .form-control::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.search-form .form-control:focus {
+    background: rgba(255,255,255,0.2);
+    box-shadow: none;
+    color: white;
+}
+
+.search-form .btn {
+    border-radius: 0 20px 20px 0;
+    border: none;
+    background: rgba(255,255,255,0.1);
+}
+
+/* Боковая панель */
+.offcanvas .list-group-item {
+    border: none;
+    padding: 12px 20px;
+    color: #333;
+    transition: background-color 0.2s ease;
+}
+
+.offcanvas .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.offcanvas .list-group-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.offcanvas .list-group-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Категории */
+.category-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 0;
+    margin-bottom: 20px;
+}
+
+.category-pill {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #f1f3f4;
+    color: #030303;
+    border-radius: 32px;
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.category-pill:hover {
+    background: #e0e0e0;
+    color: #030303;
+}
+
+.category-pill.active {
+    background: #030303;
+    color: white;
+}
+
+/* Комментарии */
+.comment-section {
+    margin-top: 24px;
+}
+
+.comment-item {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-actions .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #606060;
+    background: none;
+    border: none;
+}
+
+.comment-actions .btn:hover {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.1);
+}
+
+.comment-reply {
+    margin-left: 48px;
+    border-left: 2px solid #f0f0f0;
+    padding-left: 16px;
+}
+
+/* Анимации загрузки */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,.1);
+    border-radius: 50%;
+    border-top-color: #0d6efd;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .video-card .card-img-top {
+        height: 180px;
+    }
+
+    .playlist-video-item .video-thumbnail img {
+        width: 100px;
+        height: 56px;
+    }
+
+    .notification-item .d-flex {
+        flex-direction: column;
+    }
+
+    .notification-item .me-3 {
+        margin-right: 0 !important;
+        margin-bottom: 12px;
+        align-self: flex-start;
+    }
+
+    .category-pills {
+        padding: 12px 16px;
+        margin: 0 -16px 20px -16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .video-card .card-img-top {
+        height: 160px;
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .navbar .d-flex:first-child {
+        flex: 1;
+    }
+}
+
+/* Темная тема (опционально) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #1e1e1e;
+        border-color: #2d2d2d;
+    }
+
+    .bg-light {
+        background-color: #2d2d2d !important;
+    }
+
+    .text-muted {
+        color: #b3b3b3 !important;
+    }
+
+    .category-pill {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+
+    .category-pill:hover {
+        background: #404040;
+        color: #ffffff;
+    }
+}
+
+/* Анимации появления */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Кастомные скроллбары */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}

@@ -1,3 +1,4 @@
+
 from django.urls import path
 from . import views
 
@@ -8,3 +9,4 @@ urlpatterns = [
     path('dislike/<int:comment_id>/', views.dislike_comment, name='dislike-comment'),
     path('delete/<int:comment_id>/', views.delete_comment, name='delete-comment'),
 ]
+

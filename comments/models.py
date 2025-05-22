@@ -22,13 +22,3 @@ class Comment(models.Model):
         verbose_name_plural = "Коментарии"
         db_table = 'comments'
 
-
-# В файле models.py можно добавить модель для уведомлений
-class Notification(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_date = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ['-created_date']

@@ -1,3 +1,8 @@
+# Исправленные модели для YouTube Clone
+
+# =========================================
+# users/models.py
+# =========================================
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
@@ -17,12 +22,15 @@ class CustomUser(AbstractUser):
         super().save(*args, **kwargs)
 
         # Resize profile picture
-        if self.profile_picture:
-            img = Image.open(self.profile_picture.path)
-            if img.height > 300 or img.width > 300:
-                output_size = (300, 300)
-                img.thumbnail(output_size)
-                img.save(self.profile_picture.path)
+        if self.profile_picture and hasattr(self.profile_picture, 'path'):
+            try:
+                img = Image.open(self.profile_picture.path)
+                if img.height > 300 or img.width > 300:
+                    output_size = (300, 300)
+                    img.thumbnail(output_size)
+                    img.save(self.profile_picture.path)
+            except Exception:
+                pass  # Ignore errors if file doesn't exist
 
     class Meta:
         ordering = ['username']

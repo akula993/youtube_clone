@@ -13,4 +13,8 @@ urlpatterns = [
     path('video/<int:pk>/subscribe/', views.subscribe_to_channel, name='subscribe'),
     path('category/<int:pk>/', views.CategoryVideoListView.as_view(), name='category-videos'),
     path('search/', views.SearchResultsView.as_view(), name='search-results'),
+    path('trending/', views.TrendingVideosView.as_view(), name='trending'),
+    path('subscriptions/', views.SubscriptionsView.as_view(), name='subscriptions'),
+    path('history/', views.HistoryView.as_view(), name='history'),
+    path('liked/', views.LikedVideosView.as_view(), name='liked-videos'),
 ]

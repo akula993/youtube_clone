@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ playlist.title }} - VidShare{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Информация о плейлисте -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            {% if playlist.get_first_video %}
+                <img src="{{ playlist.get_first_video.thumbnail.url }}" class="card-img-top" alt="{{ playlist.title }}">
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                    <i class="fas fa-list fa-4x text-muted"></i>
+                </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h4 class="card-title">{{ playlist.title }}</h4>
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ playlist.creator.profile_picture.url }}" class="rounded-circle me-2" width="32" height="32">
+                    <div>
+                        <a href="{% url 'user-videos' playlist.creator.username %}" class="text-decoration-none">
+                            {{ playlist.creator.username }}
+                        </a>
+                        <div class="text-muted small">{{ playlist.created_date|date:"d.m.Y" }}</div>
+                    </div>
+                </div>
+                
+                <div class="playlist-stats mb-3">
+                    <div class="text-muted small">
+                        <i class="fas fa-list me-1"></i>{{ playlist.get_video_count }} видео
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-clock me-1"></i>{{ playlist.get_duration }}
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-eye me-1"></i>{{ playlist.get_privacy_display }}
+                    </div>
+                </div>
+                
+                {% if playlist.description %}
+                    <p class="card-text">{{ playlist.description|linebreaks }}</p>
+                {% endif %}
+                
+                <!-- Действия -->
+                <div class="d-flex gap-2 mb-3">
+                    {% if playlist_videos %}
+                        <a href="{% url 'video-detail' playlist_videos.0.video.pk %}?playlist={{ playlist.pk }}" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Воспроизвести всё
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="shufflePlaylist()">
+                            <i class="fas fa-random"></i> Перемешать
+                        </button>
+                    {% endif %}
+                    
+                    {% if user == playlist.creator %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'playlist-update' playlist.pk %}">
+                                    <i class="fas fa-edit me-2"></i>Редактировать
+                                </a></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'playlist-delete' playlist.pk %}">
+                                    <i class="fas fa-trash me-2"></i>Удалить
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Список видео -->
+    <div class="col-lg-8">
+        {% if playlist_videos %}
+            <div class="playlist-videos" id="playlistVideos">
+                {% for playlist_video in playlist_videos %}
+                    <div class="playlist-video-item d-flex mb-3 p-3 rounded border" data-video-id="{{ playlist_video.video.id }}" data-order="{{ playlist_video.order }}">
+                        <div class="video-index me-3 d-flex align-items-center">
+                            <span class="text-muted">{{ forloop.counter }}</span>
+                        </div>
+                        
+                        <div class="video-thumbnail me-3">
+                            <a href="{% url 'video-detail' playlist_video.video.pk %}?playlist={{ playlist.pk }}&index={{ forloop.counter }}">
+                                <img src="{{ playlist_video.video.thumbnail.url }}" width="120" height="68" class="rounded" alt="{{ playlist_video.video.title }}">
+                            </a>
+                        </div>
+                        
+                        <div class="video-info flex-grow-1">
+                            <h6 class="mb-1">
+                                <a href="{% url 'video-detail' playlist_video.video.pk %}?playlist={{ playlist.pk }}&index={{ forloop.counter }}" class="text-decoration-none">
+                                    {{ playlist_video.video.title }}
+                                </a>
+                            </h6>
+                            <div class="text-muted small mb-1">
+                                <a href="{% url 'user-videos' playlist_video.video.uploader.username %}" class="text-muted text-decoration-none">
+                                    {{ playlist_video.video.uploader.username }}
+                                </a>
+                            </div>
+                            <div class="text-muted small">
+                                {{ playlist_video.video.views }} просмотров • {{ playlist_video.video.created_date|timesince }} назад
+                            </div>
+                        </div>
+                        
+                        {% if user == playlist.creator %}
+                            <div class="video-actions d-flex align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary me-2 drag-handle" type="button">
+                                    <i class="fas fa-grip-vertical"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger remove-video" data-video-id="{{ playlist_video.video.id }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-video fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Плейлист пуст</h4>
+                <p class="text-muted">В этом плейлисте пока нет видео</p>
+                {% if user == playlist.creator %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVideoModal">
+                        <i class="fas fa-plus"></i> Добавить видео
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно для добавления видео -->
+{% if user == playlist.creator %}
+<div class="modal fade" id="addVideoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить видео в плейлист</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="videoSearch" placeholder="Поиск видео...">
+                </div>
+                <div id="videoSearchResults">
+                    <!-- Результаты поиска будут загружены здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Удаление видео из плейлиста
+    $('.remove-video').click(function() {
+        if (confirm('Удалить видео из плейлиста?')) {
+            const videoId = $(this).data('video-id');
+            const playlistId = {{ playlist.pk }};
+            
+            $.post(`/playlists/${playlistId}/remove/${videoId}/`, {
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            }).done(function() {
+                location.reload();
+            });
+        }
+    });
+    
+    // Поиск видео для добавления
+    let searchTimeout;
+    $('#videoSearch').on('input', function() {
+        const query = $(this).val();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length > 2) {
+            searchTimeout = setTimeout(function() {
+                searchVideos(query);
+            }, 300);
+        } else {
+            $('#videoSearchResults').empty();
+        }
+    });
+    
+    function searchVideos(query) {
+        $.get(`/api/search-videos/?q=${encodeURIComponent(query)}`).done(function(data) {
+            let html = '';
+            data.videos.forEach(function(video) {
+                html += `
+                    <div class="d-flex align-items-center mb-2 p-2 border rounded video-search-item" data-video-id="${video.id}">
+                        <img src="${video.thumbnail}" width="80" height="45" class="rounded me-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${video.title}</h6>
+                            <small class="text-muted">${video.uploader}</small>
+                        </div>
+                        <button class="btn btn-sm btn-primary add-to-playlist" data-video-id="${video.id}">
+                            Добавить
+                        </button>
+                    </div>
+                `;
+            });
+            $('#videoSearchResults').html(html);
+        });
+    }
+    
+    // Добавление видео в плейлист
+    $(document).on('click', '.add-to-playlist', function() {
+        const videoId = $(this).data('video-id');
+        const playlistId = {{ playlist.pk }};
+        
+        $.ajax({
+            url: '/playlists/add-to-playlist/',
+            method: 'POST',
+            data: JSON.stringify({
+                video_id: videoId,
+                playlist_id: playlistId
+            }),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            }
+        }).done(function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+});
+
+function shufflePlaylist() {
+    // Перемешать плейлист
+    const videos = Array.from(document.querySelectorAll('.playlist-video-item'));
+    const container = document.getElementById('playlistVideos');
+    
+    // Перемешиваем массив
+    for (let i = videos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [videos[i], videos[j]] = [videos[j], videos[i]];
+    }
+    
+    // Очищаем контейнер и добавляем перемешанные элементы
+    container.innerHTML = '';
+    videos.forEach((video, index) => {
+        video.querySelector('.video-index span').textContent = index + 1;
+        container.appendChild(video);
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

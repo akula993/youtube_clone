@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Comment
 from videos.models import Video
+# Импортируем Notification из правильного места
+from notifications.models import Notification
+from notifications.utils import NotificationService
 
 
 @login_required
@@ -17,6 +20,9 @@ def create_comment(request, video_id):
                 author=request.user,
                 video=video
             )
+
+            # Создаем уведомление о новом комментарии
+            NotificationService.notify_comment(comment)
 
             # Если запрос AJAX
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -47,6 +53,9 @@ def reply_comment(request, comment_id):
                 video=parent_comment.video,
                 parent=parent_comment
             )
+
+            # Создаем уведомление об ответе на комментарий
+            NotificationService.notify_comment_reply(reply)
 
             # Если запрос AJAX
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -126,18 +135,3 @@ def delete_comment(request, comment_id):
             return JsonResponse({'success': True})
 
     return redirect('video-detail', pk=video_id)
-
-
-# В файле views.py можно добавить систему рекомендаций
-def get_recommended_videos(user, current_video=None):
-    if user.is_authenticated:
-        # Рекомендации на основе лайков и просмотров пользователя
-        liked_categories = user.liked_videos.values_list('categories', flat=True)
-        recommended = Video.objects.filter(
-            categories__in=liked_categories
-        ).exclude(id=current_video.id if current_video else None)
-    else:
-        # Популярные видео для неавторизованных пользователей
-        recommended = Video.objects.all().order_by('-views')
-
-    return recommended[:10]

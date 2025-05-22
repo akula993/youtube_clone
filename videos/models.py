@@ -45,3 +45,29 @@ class Video(models.Model):
         verbose_name_plural = "Видео"
         verbose_name = "Видео"
         db_table = 'video'
+
+
+class WatchHistory(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='watch_history')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='watched_by')
+    watched_at = models.DateTimeField(default=timezone.now)
+    watch_duration = models.PositiveIntegerField(default=0)  # в секундах
+
+    class Meta:
+        unique_together = ['user', 'video']
+        ordering = ['-watched_at']
+
+    def __str__(self):
+        return f'{self.user.username} смотрел {self.video.title}'
+
+
+class VideoRecommendation(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='recommendations')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='recommended_to')
+    score = models.FloatField(default=0.0)
+    reason = models.CharField(max_length=100, blank=True)  # причина рекомендации
+    created_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ['user', 'video']
+        ordering = ['-score', '-created_date']
